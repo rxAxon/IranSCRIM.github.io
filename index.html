@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXON - Live Scrim Results</title>
+    <style>
+        :root {
+            --bg-dark: #0f0f23;
+            --bg-card: rgba(20, 25, 40, 0.9);
+            --neon-cyan: #00d4ff;
+            --neon-pink: #ff00ff;
+            --text-light: #e0e0e0;
+            --border-glow: #00d4ff33;
+            --total-color: #ffffff;
+            --locked-color: #ff5555;
+            --unlocked-color: #55ff55;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: var(--text-light);
+            padding: 20px;
+            direction: rtl;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin: 20px 0 30px; }
+        .neon-axon {
+            font-size: 5.5em;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #00ff00, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff, 0 0 40px #00ff00;
+            letter-spacing: 8px;
+            animation: neon-glow 1.5s ease-in-out infinite alternate;
+            margin-bottom: 10px;
+        }
+        @keyframes neon-glow {
+            from { text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff, 0 0 30px #00ff00; }
+            to { text-shadow: 0 0 20px #00ffff, 0 0 30px #ff00ff, 0 0 50px #00ff00, 0 0 70px #00ffff; }
+        }
+        .subtitle {
+            font-size: 1.3em;
+            color: #66d9ff;
+            margin-bottom: 10px;
+        }
+        .lobby-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            margin: 10px 0;
+            text-align: center;
+        }
+        .lobby-input {
+            display: inline-block;
+            width: 250px;
+            padding: 8px;
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            background: rgba(30, 40, 70, 0.8);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+        .lobby-input:disabled {
+            background: rgba(50, 50, 70, 0.8);
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00bfff, #0088cc);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+        .btn-confirm { background: linear-gradient(45deg, #28a745, #1e7e34); }
+        .btn-cancel { background: linear-gradient(45deg, #dc3545, #c82333); }
+        .btn-screenshot { background: linear-gradient(45deg, #9c27b0, #6a1b9a); }
+        .btn-admin {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52) !important;
+            font-size: 0.9em;
+        }
+        .btn-admin.unlocked {
+            background: linear-gradient(45deg, #51cf66, #40a14f) !important;
+        }
+        .btn-new-scrim {
+            background: linear-gradient(45deg, #ff8c00, #ff6b00);
+        }
+        .btn-delete {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            padding: 6px 12px;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border-glow);
+            margin-bottom: 30px;
+        }
+        .card-header {
+            background: linear-gradient(to right, #00bfff, #0088cc);
+            padding: 15px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        .card-body { padding: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.05em;
+        }
+        th, td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #334466;
+        }
+        th {
+            background: rgba(0, 180, 255, 0.2);
+            color: var(--neon-cyan);
+            font-weight: 700;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #334466;
+            border-radius: 6px;
+            background: rgba(30, 40, 70, 0.6);
+            color: white;
+            text-align: center;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+        input:disabled {
+            background: rgba(50, 50, 70, 0.8);
+            color: #aaa;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .team-name-input {
+            font-weight: 600;
+            color: #00ffcc;
+        }
+
+        .total-cell {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid #ffffff;
+            pointer-events: none;
+        }
+        .total-cell input {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-weight: bold;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffaa00) !important; color: #000 !important; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #aaaaaa) !important; color: #000 !important; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #b87333) !important; color: #fff !important; }
+
+        /* لیست اسکریم‌ها - پایین جدول */
+        .scrims-section {
+            margin-top: 30px;
+        }
+        .scrims-section h3 {
+            text-align: center;
+            color: var(--neon-cyan);
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        .scrim-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(20, 25, 40, 0.6);
+            border-radius: 12px;
+            border: 1px solid var(--border-glow);
+        }
+        .scrim-item {
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #334466;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .scrim-item:hover {
+            background: linear-gradient(45deg, #00bfff, #0088cc);
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+        .scrim-item.active {
+            background: linear-gradient(45deg, #28a745, #1e7e34) !important;
+            color: white;
+            border: 2px solid #51cf66;
+            box-shadow: 0 0 20px rgba(81, 207, 102, 0.5);
+        }
+        .scrim-item .info {
+            flex: 1;
+        }
+        .scrim-item .lobby {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .scrim-item .datetime {
+            font-size: 0.9em;
+            color: #66d9ff;
+            opacity: 0.9;
+        }
+        .scrim-item .delete-btn {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .scrim-item:hover .delete-btn,
+        .scrim-item.active .delete-btn {
+            opacity: 1;
+        }
+
+        .edit-controls {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(20, 25, 40, 0.7);
+            border-radius: 10px;
+            display: none;
+        }
+        .edit-controls.show {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            margin: 40px 0 20px;
+            color: #6688aa;
+            font-size: 0.9em;
+        }
+        .admin-status {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        .locked { color: var(--locked-color); }
+        .unlocked { color: var(--unlocked-color); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid var(--neon-cyan);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid #00d4ff;
+            background: #0f0f23;
+            color: white;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        .modal button {
+            padding: 10px 25px;
+            margin: 5px;
+        }
+        @media (max-width: 768px) {
+            .neon-axon { font-size: 3em; }
+            table { font-size: 0.9em; }
+            th, td { padding: 8px 4px; }
+            .scrim-list { max-height: 300px; }
+            .scrim-item { flex-direction: column; text-align: center; }
+            .scrim-item .delete-btn { opacity: 1; margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="neon-axon">AXON</div>
+            <p class="subtitle">رنکینگ زنده اسکریم‌های پابجی موبایل</p>
+            <div class="admin-status" id="admin-status">
+                وضعیت: <span class="locked">قفل شده (فقط مشاهده)</span>
+            </div>
+        </div>
+
+        <!-- کنترل‌ها -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn btn-new-scrim" onclick="createNewScrim()" id="new-scrim-btn">اسکریم جدید</button>
+            <button class="btn" onclick="exportCSV()">خروجی CSV</button>
+            <button class="btn btn-screenshot" onclick="captureScreenshot()">گرفتن عکس</button>
+            <button class="btn btn-admin" id="admin-btn" onclick="openAdminModal()">ورود ادمین</button>
+        </div>
+
+        <!-- عنوان لابی -->
+        <div style="text-align: center; margin: 15px 0;">
+            <input type="text" class="lobby-input" id="lobby-name" placeholder="نام لابی را وارد کنید..." onchange="tempUpdateLobby(this.value)" disabled>
+        </div>
+        <div class="lobby-title" id="lobby-title">لابی انتخاب نشده</div>
+
+        <!-- کنترل‌های ویرایش -->
+        <div class="edit-controls" id="edit-controls">
+            <button class="btn btn-confirm" onclick="confirmChanges()">تأیید و ذخیره</button>
+            <button class="btn btn-cancel" onclick="cancelChanges()">لغو تغییرات</button>
+        </div>
+
+        <!-- جدول -->
+        <div class="card">
+            <div class="card-header" id="table-title">جدول رنکینگ</div>
+            <div class="card-body">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>تیم</th>
+                            <th>KP</th>
+                            <th>PP</th>
+                            <th>TP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- لیست اسکریم‌های ذخیره شده - پایین جدول -->
+        <div class="scrims-section">
+            <h3>اسکریم‌های ذخیره شده</h3>
+            <div class="scrim-list" id="scrim-list">
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    اسکریم جدیدی بسازید...
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>AXON Esports | مدیریت اسکریم‌های زنده</p>
+        </div>
+    </div>
+
+    <!-- مودال رمز -->
+    <div class="modal" id="admin-modal">
+        <div class="modal-content">
+            <h3>ورود ادمین</h3>
+            <p>رمز عبور را وارد کنید:</p>
+            <input type="password" id="admin-password" placeholder="رمز عبور...">
+            <div>
+                <button class="btn" onclick="loginAdmin()">ورود</button>
+                <button class="btn btn-cancel" onclick="closeAdminModal()">لغو</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        const ADMIN_PASSWORD = "Rexon";
+        let isAdmin = localStorage.getItem('axon-admin') === 'true';
+        let currentScrimId = null;
+        let scrims = JSON.parse(localStorage.getItem('axon-scrims')) || {};
+        let tempTeams = null; // تغییرات موقت
+        let tempLobby = null;
+        let hasChanges = false;
+
+        const initialTeams = Array.from({length: 20}, (_, i) => ({
+            name: `تیم ${i + 1}`,
+            elim: 0,
+            place: 0,
+            total: 0
+        }));
+
+        // ایجاد اسکریم جدید
+        function createNewScrim() {
+            if (!isAdmin) return alert('فقط ادمین می‌تواند اسکریم جدید بسازد!');
+            
+            const now = new Date();
+            const date = now.toLocaleDateString('fa-IR');
+            const time = now.toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'});
+            const id = Date.now().toString();
+            
+            scrims[id] = {
+                lobby: `لابی ${Object.keys(scrims).length + 1}`,
+                date,
+                time,
+                teams: [...initialTeams.map(t => ({...t}))]
+            };
+            
+            localStorage.setItem('axon-scrims', JSON.stringify(scrims));
+            loadScrim(id);
+            renderScrimList();
+            alert('اسکریم جدید ساخته شد!');
+        }
+
+        // بارگذاری اسکریم
+        function loadScrim(id) {
+            if (hasChanges && !confirm('تغییرات ذخیره نشده‌اند. ادامه؟')) return;
+
+            currentScrimId = id;
+            const scrim = scrims[id];
+            if (!scrim) return;
+
+            document.getElementById('lobby-name').value = scrim.lobby;
+            document.getElementById('lobby-title').textContent = `${scrim.lobby} - ${scrim.date} - ${scrim.time}`;
+            
+            // کپی عمیق
+            window.currentTeams = JSON.parse(JSON.stringify(scrim.teams));
+            tempTeams = JSON.parse(JSON.stringify(scrim.teams));
+            tempLobby = scrim.lobby;
+
+            renderTable();
+            renderScrimList();
+            updateAdminUI();
+            hasChanges = false;
+            hideEditControls();
+        }
+
+        // حذف اسکریم
+        function deleteScrim(id, event) {
+            event.stopPropagation();
+            if (!isAdmin) return alert('فقط ادمین می‌تواند حذف کند!');
+            if (!confirm('این اسکریم برای همیشه حذف می‌شود. ادامه؟')) return;
+
+            delete scrims[id];
+            localStorage.setItem('axon-scrims', JSON.stringify(scrims));
+
+            if (currentScrimId === id) {
+                currentScrimId = null;
+                window.currentTeams = null;
+                document.getElementById('lobby-title').textContent = 'لابی انتخاب نشده';
+                renderTable();
+            }
+
+            renderScrimList();
+            alert('اسکریم حذف شد!');
+        }
+
+        // رندر لیست اسکریم‌ها
+        function renderScrimList() {
+            const container = document.getElementById('scrim-list');
+            container.innerHTML = '';
+            
+            if (Object.keys(scrims).length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">اسکریم جدیدی بسازید...</div>';
+                return;
+            }
+
+            Object.keys(scrims).reverse().forEach(id => {
+                const s = scrims[id];
+                const div = document.createElement('div');
+                div.className = 'scrim-item';
+                if (id === currentScrimId) div.classList.add('active');
+
+                div.innerHTML = `
+                    <div class="info">
+                        <span class="lobby">${s.lobby}</span>
+                        <span class="datetime">${s.date} | ${s.time}</span>
+                    </div>
+                    <button class="btn btn-delete delete-btn" onclick="deleteScrim('${id}', event)">حذف</button>
+                `;
+                div.onclick = (e) => {
+                    if (e.target.tagName === 'BUTTON') return;
+                    loadScrim(id);
+                };
+                container.appendChild(div);
+            });
+        }
+
+        // بروزرسانی موقت
+        function tempUpdateTeam(index, field, value) {
+            if (!isAdmin || !tempTeams) return;
+            if (field === 'name') tempTeams[index].name = value;
+            else {
+                const num = parseInt(value) || 0;
+                tempTeams[index][field] = num;
+                tempTeams[index].total = tempTeams[index].elim + tempTeams[index].place;
+            }
+            hasChanges = true;
+            showEditControls();
+            renderTable(true); // رندر با داده‌های موقت
+        }
+
+        function tempUpdateLobby(value) {
+            if (!isAdmin) return;
+            tempLobby = value || 'لابی بدون نام';
+            hasChanges = true;
+            showEditControls();
+            document.getElementById('lobby-title').textContent = `${tempLobby} - ${scrims[currentScrimId]?.date || ''} - ${scrims[currentScrimId]?.time || ''}`;
+        }
+
+        // تأیید تغییرات
+        function confirmChanges() {
+            if (!isAdmin || !currentScrimId) return;
+            scrims[currentScrimId].teams = JSON.parse(JSON.stringify(tempTeams));
+            scrims[currentScrimId].lobby = tempLobby;
+            localStorage.setItem('axon-scrims', JSON.stringify(scrims));
+            window.currentTeams = JSON.parse(JSON.stringify(tempTeams));
+            hasChanges = false;
+            hideEditControls();
+            renderScrimList();
+            alert('تغییرات با موفقیت ذخیره شد!');
+        }
+
+        // لغو تغییرات
+        function cancelChanges() {
+            if (!confirm('تغییرات لغو شوند؟')) return;
+            tempTeams = JSON.parse(JSON.stringify(window.currentTeams));
+            tempLobby = scrims[currentScrimId].lobby;
+            document.getElementById('lobby-name').value = tempLobby;
+            hasChanges = false;
+            hideEditControls();
+            renderTable();
+            document.getElementById('lobby-title').textContent = `${tempLobby} - ${scrims[currentScrimId].date} - ${scrims[currentScrimId].time}`;
+        }
+
+        function showEditControls() {
+            document.getElementById('edit-controls').classList.add('show');
+        }
+
+        function hideEditControls() {
+            document.getElementById('edit-controls').classList.remove('show');
+        }
+
+        // رندر جدول
+        function renderTable(useTemp = false) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            const teamsToShow = useTemp ? tempTeams : window.currentTeams;
+            if (!teamsToShow) return;
+
+            teamsToShow.sort((a, b) => b.total - a.total);
+            
+            teamsToShow.forEach((team, index) => {
+                const tr = document.createElement('tr');
+                if (index === 0) tr.classList.add('rank-1');
+                if (index === 1) tr.classList.add('rank-2');
+                if (index === 2) tr.classList.add('rank-3');
+                
+                const disabled = isAdmin ? '' : 'disabled';
+                const nameOnchange = isAdmin ? `onchange="tempUpdateTeam(${index}, 'name', this.value)"` : '';
+                const elimOnchange = isAdmin ? `onchange="tempUpdateTeam(${index}, 'elim', this.value)"` : '';
+                const placeOnchange = isAdmin ? `onchange="tempUpdateTeam(${index}, 'place', this.value)"` : '';
+                
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><input type="text" class="team-name-input" value="${team.name}" ${nameOnchange} ${disabled}></td>
+                    <td><input type="number" min="0" value="${team.elim}" ${elimOnchange} ${disabled}></td>
+                    <td><input type="number" min="0" value="${team.place}" ${placeOnchange} ${disabled}></td>
+                    <td class="total-cell"><input type="text" value="${team.total}" readonly></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportCSV() {
+            if (!currentScrimId) return alert('اسکریم انتخاب نشده!');
+            const s = scrims[currentScrimId];
+            let csv = 'رتبه,تیم,KP,PP,TP\n';
+            s.teams.forEach((t, i) => {
+                csv += `${i + 1},${t.name},${t.elim},${t.place},${t.total}\n`;
+            });
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${s.lobby}_${s.date}_${s.time}.csv`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function captureScreenshot() {
+            const element = document.querySelector('.container');
+            const btn = document.querySelector('.btn-screenshot');
+            btn.disabled = true;
+            btn.textContent = 'در حال تولید...';
+
+            html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null }).then(canvas => {
+                const s = scrims[currentScrimId] || {lobby: 'Unknown', date: '', time: ''};
+                const link = document.createElement('a');
+                link.download = `${s.lobby}_${s.date}_${s.time}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.disabled = false;
+                btn.textContent = 'گرفتن عکس';
+            }).catch(() => {
+                alert('خطا در گرفتن عکس.');
+                btn.disabled = false;
+                btn.textContent = 'گرفتن عکس';
+            });
+        }
+
+        function updateAdminUI() {
+            const span = document.querySelector('#admin-status span');
+            const lobbyInput = document.getElementById('lobby-name');
+            const adminBtn = document.getElementById('admin-btn');
+
+            if (isAdmin) {
+                span.textContent = 'باز (ویرایش فعال)';
+                span.className = 'unlocked';
+                lobbyInput.disabled = false;
+                adminBtn.textContent = 'خروج ادمین';
+                adminBtn.classList.add('unlocked');
+            } else {
+                span.textContent = 'قفل شده (فقط مشاهده)';
+                span.className = 'locked';
+                lobbyInput.disabled = true;
+                adminBtn.textContent = 'ورود ادمین';
+                adminBtn.classList.remove('unlocked');
+            }
+            renderTable();
+        }
+
+        function openAdminModal() {
+            if (isAdmin) {
+                if (confirm('خروج؟')) {
+                    isAdmin = false;
+                    localStorage.setItem('axon-admin', 'false');
+                    updateAdminUI();
+                    renderTable();
+                }
+                return;
+            }
+            document.getElementById('admin-modal').style.display = 'flex';
+            document.getElementById('admin-password').focus();
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').style.display = 'none';
+            document.getElementById('admin-password').value = '';
+        }
+
+        function loginAdmin() {
+            const input = document.getElementById('admin-password').value;
+            if (input === ADMIN_PASSWORD) {
+                isAdmin = true;
+                localStorage.setItem('axon-admin', 'true');
+                closeAdminModal();
+                updateAdminUI();
+                renderTable();
+                alert('ورود موفق!');
+            } else {
+                alert('رمز اشتباه!');
+            }
+        }
+
+        document.getElementById('admin-password').addEventListener('keyup', e => {
+            if (e.key === 'Enter') loginAdmin();
+        });
+
+        // هشدار قبل از خروج
+        window.addEventListener('beforeunload', e => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // شروع اولیه
+        window.onload = () => {
+            renderScrimList();
+            updateAdminUI();
+        };
+    </script>
+</body>
+</html>
